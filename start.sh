@@ -27,18 +27,16 @@ if [[ -d "backend" ]]; then
     elif has_npm_script "package.json" "dev"; then
       exec npm run dev
     fi
-    cd ..
   fi
 
   if [[ -f "backend/requirements.txt" ]]; then
     cd backend
-    python -m pip install -r requirements.txt
+    python -m pip install --quiet --no-cache-dir -r requirements.txt
     if command -v gunicorn &>/dev/null; then
       exec gunicorn wsgi:app --bind "0.0.0.0:${PORT:-8080}"
     elif [[ -f "app.py" ]]; then
       exec python app.py
     fi
-    cd ..
   fi
 fi
 
