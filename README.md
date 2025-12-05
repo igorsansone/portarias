@@ -36,6 +36,11 @@ Criando branch e PR (exemplo)
 - git push --set-upstream origin feature/portarias-crors
 - Abra um pull request na interface do GitHub descrevendo o que foi adicionado.
 
+## Docker
+- O container usa `node:18-alpine` como imagem base para garantir que Node.js e npm estejam disponíveis.
+- Para construir a imagem: `docker build -t portarias .`
+- Para rodar o container: `docker run -p 3000:3000 portarias`
+
 Observações
 - Ajuste CORS/URLs conforme seu ambiente.
 - Se o repositório já tem um backend/frontend existente, adapte os arquivos em vez de substituir.
