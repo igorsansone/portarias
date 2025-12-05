@@ -6,17 +6,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Create backend directory for package files
+RUN mkdir -p backend
+
 # Copy backend package files first to leverage Docker layer caching
-COPY backend/package*.json ./backend/
+COPY backend/package.json ./backend/
 
 # Install production dependencies
-# Use npm ci if package-lock.json exists, otherwise use npm install
-RUN cd backend && \
-    if [ -f package-lock.json ]; then \
-      npm ci --only=production; \
-    else \
-      npm install --only=production; \
-    fi
+# Use npm install since package-lock.json may not exist
+RUN cd backend && npm install --only=production
 
 # Copy the rest of the repository
 COPY . .
