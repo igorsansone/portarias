@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Store the original directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Allow overriding the automatic detection with START_CMD environment variable
 if [[ -n "${START_CMD:-}" ]]; then
   exec bash -lc "$START_CMD"
@@ -18,9 +21,9 @@ has_npm_script() {
 }
 
 # Backend detection
-if [[ -d "backend" ]]; then
-  if [[ -f "backend/package.json" ]]; then
-    cd backend
+if [[ -d "$SCRIPT_DIR/backend" ]]; then
+  if [[ -f "$SCRIPT_DIR/backend/package.json" ]]; then
+    cd "$SCRIPT_DIR/backend" || exit 1
     npm install --no-audit --no-fund
     if has_npm_script "package.json" "start"; then
       exec npm start
@@ -29,29 +32,37 @@ if [[ -d "backend" ]]; then
     fi
   fi
 
-  if [[ -f "backend/requirements.txt" ]]; then
-    cd backend
+  if [[ -f "$SCRIPT_DIR/backend/requirements.txt" ]]; then
+    cd "$SCRIPT_DIR/backend" || exit 1
     python -m pip install --quiet --no-cache-dir -r requirements.txt
     if command -v gunicorn &>/dev/null; then
-      exec gunicorn wsgi:app --bind "0.0.0.0:${PORT:-8080}"
-    elif [[ -f "app.py" ]]; then
+      # Try common WSGI entry points
+      if [[ -f "wsgi.py" ]]; then
+        exec gunicorn wsgi:app --bind "0.0.0.0:${PORT:-8080}"
+      elif [[ -f "app.py" ]]; then
+        exec gunicorn app:app --bind "0.0.0.0:${PORT:-8080}"
+      elif [[ -f "main.py" ]]; then
+        exec gunicorn main:app --bind "0.0.0.0:${PORT:-8080}"
+      fi
+    fi
+    if [[ -f "app.py" ]]; then
       exec python app.py
     fi
   fi
 fi
 
 # Frontend detection
-if [[ -d "frontend" ]]; then
-  if [[ -f "frontend/package.json" ]] && has_npm_script "frontend/package.json" "start"; then
-    cd frontend
+if [[ -d "$SCRIPT_DIR/frontend" ]]; then
+  if [[ -f "$SCRIPT_DIR/frontend/package.json" ]] && has_npm_script "$SCRIPT_DIR/frontend/package.json" "start"; then
+    cd "$SCRIPT_DIR/frontend" || exit 1
     npm install --no-audit --no-fund
     exec npm start
   fi
 
-  if [[ -d "frontend/build" ]]; then
-    exec python -m http.server "${PORT:-8080}" --directory frontend/build
-  elif [[ -d "frontend/dist" ]]; then
-    exec python -m http.server "${PORT:-8080}" --directory frontend/dist
+  if [[ -d "$SCRIPT_DIR/frontend/build" ]]; then
+    exec python -m http.server "${PORT:-8080}" --directory "$SCRIPT_DIR/frontend/build"
+  elif [[ -d "$SCRIPT_DIR/frontend/dist" ]]; then
+    exec python -m http.server "${PORT:-8080}" --directory "$SCRIPT_DIR/frontend/dist"
   fi
 fi
 
