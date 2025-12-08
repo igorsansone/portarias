@@ -1,9 +1,4 @@
-FROM node:18-alpine
-
-# Install build dependencies for native modules (better-sqlite3)
-# Note: In some restricted environments, apk may not have internet access
-# In such cases, use Dockerfile.debian instead
-RUN apk add --no-cache python3 make g++ || echo "Warning: Could not install build tools"
+FROM node:18
 
 # Define working directory
 WORKDIR /app
@@ -14,11 +9,13 @@ COPY backend/package*.json ./
 
 # Install dependencies before copying source code for better layer caching
 # Use npm ci if package-lock.json exists, otherwise npm install
+# This Debian-based image includes build tools needed for native modules like better-sqlite3
 RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
+      npm ci --omit=dev || npm install --omit=dev; \
     else \
       npm install --omit=dev; \
-    fi
+    fi && \
+    npm list || true
 
 # Copy backend application code
 COPY backend/ ./

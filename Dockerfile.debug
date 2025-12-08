@@ -1,5 +1,23 @@
 FROM node:18-alpine
+
+# Install build dependencies for native modules (better-sqlite3)
+# Note: In some restricted environments, apk may not have internet access
+RUN apk add --no-cache python3 make g++ || echo "Warning: Could not install build tools"
+
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN echo "Conteúdo de /app:" && ls -la /app && echo "Conteúdo de package.json:" && cat package.json || true
+
+# Copy package.json from backend directory
+COPY backend/package*.json ./
+
+# Debug: List files and show package.json content
+RUN echo "=== Contents of /app ===" && ls -la /app && \
+    echo "=== Contents of package.json ===" && cat package.json || true
+
+# Install dependencies
 RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+
+# Copy backend application code
+COPY backend/ ./
+
+# Debug: List files after copying all code
+RUN echo "=== Contents of /app after COPY ===" && ls -la /app
