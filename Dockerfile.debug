@@ -1,5 +1,29 @@
 FROM node:18-alpine
+
+# Install build dependencies for native modules (better-sqlite3)
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN echo "Conteúdo de /app:" && ls -la /app && echo "Conteúdo de package.json:" && cat package.json || true
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+
+# Copy package files from backend for debugging
+COPY backend/package*.json ./
+
+# Debug: list files and show package.json content
+RUN echo "=== Contents of /app ===" && ls -la /app && \
+    echo "\n=== Content of package.json ===" && cat package.json && \
+    echo "\n=== Checking for package-lock.json ===" && \
+    if [ -f package-lock.json ]; then \
+      echo "package-lock.json exists" && cat package-lock.json; \
+    else \
+      echo "package-lock.json does NOT exist"; \
+    fi
+
+# Install dependencies
+RUN if [ -f package-lock.json ]; then \
+      echo "Using npm ci" && npm ci --omit=dev; \
+    else \
+      echo "Using npm install" && npm install --omit=dev; \
+    fi
+
+# List installed modules
+RUN echo "\n=== Installed node_modules ===" && ls -la node_modules/ | head -20
