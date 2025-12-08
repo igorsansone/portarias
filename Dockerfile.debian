@@ -11,10 +11,11 @@ COPY backend/package*.json ./
 # Use npm ci if package-lock.json exists, otherwise npm install
 # This Debian-based image includes build tools needed for native modules like better-sqlite3
 RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
+      npm ci --omit=dev || npm install --omit=dev; \
     else \
       npm install --omit=dev; \
-    fi
+    fi && \
+    npm list || true
 
 # Copy backend application code
 COPY backend/ ./

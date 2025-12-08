@@ -2,10 +2,6 @@
 node_modules/
 **/node_modules/
 
-# Package lock files (generated)
-package-lock.json
-**/package-lock.json
-
 # Logs
 *.log
 npm-debug.log*

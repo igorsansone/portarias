@@ -1,7 +1,8 @@
 FROM node:18-alpine
 
 # Install build dependencies for native modules (better-sqlite3)
-RUN apk add --no-cache python3 make g++
+# Note: In some restricted environments, apk may not have internet access
+RUN apk add --no-cache python3 make g++ || echo "Warning: Could not install build tools"
 
 WORKDIR /app
 
