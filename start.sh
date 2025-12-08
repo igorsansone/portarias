@@ -1,71 +1,44 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
-# Store the original directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Allow overriding the automatic detection with START_CMD environment variable
-if [[ -n "${START_CMD:-}" ]]; then
-  exec bash -lc "$START_CMD"
-fi
-
-# Helper function to check if a package.json has a specific script
-has_npm_script() {
-  local pkg_json="$1"
-  local script_name="$2"
-  if [[ -f "$pkg_json" ]]; then
-    grep -q "\"$script_name\":" "$pkg_json" 2>/dev/null
-  else
-    return 1
-  fi
-}
-
-# Backend detection
-if [[ -d "$SCRIPT_DIR/backend" ]]; then
-  if [[ -f "$SCRIPT_DIR/backend/package.json" ]]; then
-    cd "$SCRIPT_DIR/backend" || exit 1
-    npm install --no-audit --no-fund
-    if has_npm_script "package.json" "start"; then
-      exec npm start
-    elif has_npm_script "package.json" "dev"; then
-      exec npm run dev
-    fi
-  fi
-
-  if [[ -f "$SCRIPT_DIR/backend/requirements.txt" ]]; then
-    cd "$SCRIPT_DIR/backend" || exit 1
-    python -m pip install --quiet --no-cache-dir -r requirements.txt
-    if command -v gunicorn &>/dev/null; then
-      # Try common WSGI entry points
-      if [[ -f "wsgi.py" ]]; then
-        exec gunicorn wsgi:app --bind "0.0.0.0:${PORT:-8080}"
-      elif [[ -f "app.py" ]]; then
-        exec gunicorn app:app --bind "0.0.0.0:${PORT:-8080}"
-      elif [[ -f "main.py" ]]; then
-        exec gunicorn main:app --bind "0.0.0.0:${PORT:-8080}"
-      fi
-    fi
-    if [[ -f "app.py" ]]; then
-      exec python app.py
+# Robust detection of npm / Node.js
+NPM_CMD=""
+if command -v npm >/dev/null 2>&1; then
+  NPM_CMD="$(command -v npm)"
+else
+  # Try enabling corepack (if present) which can expose package managers in some images
+  if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+    if command -v npm >/dev/null 2>&1; then
+      NPM_CMD="$(command -v npm)"
     fi
   fi
 fi
 
-# Frontend detection
-if [[ -d "$SCRIPT_DIR/frontend" ]]; then
-  if [[ -f "$SCRIPT_DIR/frontend/package.json" ]] && has_npm_script "$SCRIPT_DIR/frontend/package.json" "start"; then
-    cd "$SCRIPT_DIR/frontend" || exit 1
-    npm install --no-audit --no-fund
-    exec npm start
+if [ -z "$NPM_CMD" ]; then
+  # As a last resort, if Node is present and an index file exists, run node directly
+  if command -v node >/dev/null 2>&1 && [ -f index.js ]; then
+    echo "npm not found; running node index.js"
+    exec node index.js
   fi
 
-  if [[ -d "$SCRIPT_DIR/frontend/build" ]]; then
-    exec python -m http.server "${PORT:-8080}" --directory "$SCRIPT_DIR/frontend/build"
-  elif [[ -d "$SCRIPT_DIR/frontend/dist" ]]; then
-    exec python -m http.server "${PORT:-8080}" --directory "$SCRIPT_DIR/frontend/dist"
-  fi
+  echo "ERROR: npm (or compatible package manager) not found in PATH."
+  echo "Solution: use a Node.js base image (e.g. node:18-alpine) or install Node/npm in the image."
+  exit 1
 fi
 
-echo "Error: Could not detect how to start the application."
-echo "Please set the START_CMD environment variable or ensure your project has a recognized structure."
-exit 1
+echo "Using $NPM_CMD to start the app..."
+
+# If package.json exists prefer running the start script (if present)
+if [ -f package.json ]; then
+  # Use npm run start --if-present to avoid failing if start script not defined
+  exec "$NPM_CMD" run start --if-present
+else
+  # Fallback to node index.js if present
+  if [ -f index.js ]; then
+    exec node index.js
+  fi
+
+  echo "No package.json or index.js found; nothing to run"
+  exit 1
+fi
