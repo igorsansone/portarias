@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Package lock files (generated)
+package-lock.json
+**/package-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db
+backend/data/*.db
+
+# Build output
+dist/
+build/
+frontend/dist/

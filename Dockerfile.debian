@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18
 
 # Define working directory
 WORKDIR /app
@@ -9,8 +9,7 @@ COPY backend/package*.json ./
 
 # Install dependencies before copying source code for better layer caching
 # Use npm ci if package-lock.json exists, otherwise npm install
-# Note: better-sqlite3 may require build tools (python3, make, g++) in restricted environments
-# If build fails, consider using node:18 (Debian-based) instead of node:18-alpine
+# This Debian-based image includes build tools needed for native modules like better-sqlite3
 RUN if [ -f package-lock.json ]; then \
       npm ci --omit=dev; \
     else \

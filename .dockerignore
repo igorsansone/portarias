@@ -1,0 +1,31 @@
+# Ignore node_modules from host
+**/node_modules
+node_modules
+
+# Ignore frontend build artifacts and source (only backend needed in image)
+frontend/
+
+# Ignore git directory
+.git
+.gitignore
+
+# Ignore documentation and development files
+README.md
+*.md
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore logs
+*.log
+npm-debug.log*
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# DO NOT ignore package.json and package-lock.json
+# These are needed for dependency installation
+!backend/package.json
+!backend/package-lock.json
