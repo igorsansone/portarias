@@ -3,12 +3,11 @@ FROM node:18-alpine
 # Defina o diretório de trabalho
 WORKDIR /app
 
-# Copie explicitamente os manifests (evita problemas com wildcard)
-COPY package.json package-lock.json ./
+# Copie package.json e, se houver, package-lock.json
+COPY package*.json ./
 
-# Opcional: debug (remova depois). Vai listar arquivos para confirmar que package.json está aqui.
-# RUN ls -la /app
-# RUN cat /app/package.json
+# (opcional) listar para debug - remova depois
+RUN echo "Arquivos em /app:" && ls -la /app
 
 # Instale dependências (usa npm ci se houver package-lock.json)
 RUN if [ -f package-lock.json ]; then \
@@ -20,6 +19,5 @@ RUN if [ -f package-lock.json ]; then \
 # Copie o restante do código
 COPY . .
 
-# Build / start (ajuste conforme sua app)
-# RUN npm run build
+# Ajuste o comando de entrada conforme sua app
 CMD ["node", "index.js"]
