@@ -9,9 +9,9 @@ frontend/
 .git
 .gitignore
 
-# Ignore documentation and development files
+# Ignore documentation and development files  
+# Note: BUILD.md is excluded but you may want to include it in the image
 README.md
-*.md
 
 # Ignore environment files
 .env

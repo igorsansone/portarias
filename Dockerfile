@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
 # Install build dependencies for native modules (better-sqlite3)
 # Note: In some restricted environments, apk may not have internet access
