@@ -1,23 +1,20 @@
-FROM node:18-alpine
+FROM node:18-slim
 
-# Defina o diretório de trabalho
+# Set working directory
 WORKDIR /app
 
-# Copie package.json e, se houver, package-lock.json
-COPY package*.json ./
+# Copy package.json and package-lock.json (if exists) from backend
+COPY backend/package*.json ./
 
-# (opcional) listar para debug - remova depois
-RUN echo "Arquivos em /app:" && ls -la /app
+# Install dependencies
+# Uses package-lock.json for reproducible builds if available
+RUN npm install --omit=dev
 
-# Instale dependências (usa npm ci se houver package-lock.json)
-RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
-    else \
-      npm install --omit=dev; \
-    fi
+# Copy the rest of the backend code
+COPY backend/ ./
 
-# Copie o restante do código
-COPY . .
+# Expose backend port
+EXPOSE 3000
 
-# Ajuste o comando de entrada conforme sua app
-CMD ["node", "index.js"]
+# Start the backend server
+CMD ["node", "server.js"]
