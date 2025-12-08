@@ -1,27 +1,25 @@
 FROM node:18-alpine
 
-# Set working directory
+# Defina o diretório de trabalho
 WORKDIR /app
 
-# Copy package manifests first to leverage Docker cache
-COPY package*.json ./
+# Copie explicitamente os manifests (evita problemas com wildcard)
+COPY package.json package-lock.json ./
 
-# Install dependencies
-# Use npm ci if package-lock.json exists, otherwise npm install.
+# Opcional: debug (remova depois). Vai listar arquivos para confirmar que package.json está aqui.
+# RUN ls -la /app
+# RUN cat /app/package.json
+
+# Instale dependências (usa npm ci se houver package-lock.json)
 RUN if [ -f package-lock.json ]; then \
       npm ci --omit=dev; \
     else \
       npm install --omit=dev; \
     fi
 
-# Copy application code
+# Copie o restante do código
 COPY . .
 
-# Ensure start script is executable
-RUN chmod +x ./start.sh
-
-# Expose port (adjust if your app uses a different port)
-EXPOSE 3000
-
-# Use the project start script
-CMD ["./start.sh"]
+# Build / start (ajuste conforme sua app)
+# RUN npm run build
+CMD ["node", "index.js"]
