@@ -1,5 +1,29 @@
-FROM node:18-alpine
+# Use node:18 (Debian-based) instead of alpine to include build tools for better-sqlite3
+FROM node:18
+
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN echo "Conteúdo de /app:" && ls -la /app && echo "Conteúdo de package.json:" && cat package.json || true
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+
+# Debug: mostrar estrutura antes de copiar
+RUN echo "=== Diretório /app inicial ===" && ls -la /app || true
+
+# Copie package.json do backend (use wildcard para permitir package-lock.json opcional)
+COPY backend/package*.json ./
+
+# Debug: verificar o que foi copiado
+RUN echo "=== Conteúdo de /app após COPY ===" && ls -la /app && \
+    echo "=== Conteúdo de package.json ===" && cat package.json || echo "ERRO: package.json não encontrado"
+
+# Instalar dependências
+RUN if [ -f package-lock.json ]; then \
+      echo "=== Usando npm ci ===" && npm ci --omit=dev; \
+    else \
+      echo "=== Usando npm install ===" && npm install --omit=dev; \
+    fi
+
+# Copiar código do backend
+COPY backend/ .
+
+# Debug: mostrar estrutura final
+RUN echo "=== Estrutura final de /app ===" && ls -la /app
+
+CMD ["node", "server.js"]
