@@ -5,19 +5,19 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files for backend
-COPY backend/package.json backend/package-lock.json* ./backend/
+COPY backend/package.json ./backend/
 
 # Install backend dependencies
 WORKDIR /app/backend
-RUN npm ci --only=production || npm install --only=production
+RUN npm install --omit=dev
 
 # Copy package files for frontend
 WORKDIR /app
-COPY frontend/package.json frontend/package-lock.json* ./frontend/
+COPY frontend/package.json ./frontend/
 
 # Install frontend dependencies
 WORKDIR /app/frontend
-RUN npm ci --only=production || npm install --only=production
+RUN npm install --omit=dev
 
 # Copy the rest of the application code
 WORKDIR /app
