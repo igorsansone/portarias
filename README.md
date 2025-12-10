@@ -103,12 +103,60 @@ O servidor de desenvolvimento estará disponível em `http://localhost:5173`
 - O frontend está configurado para fazer proxy das requisições `/api` para `http://localhost:3000`
 - Mudanças no código são recarregadas automaticamente
 
+## ⚙️ Variáveis de Ambiente
+
+O projeto suporta as seguintes variáveis de ambiente para controlar o comportamento do build e inicialização:
+
+### Build e Start Script
+
+- **`SKIP_FRONTEND_BUILD`** (valores: `1` ou `true`)  
+  Pula a compilação do frontend durante a inicialização. Útil quando o frontend já foi compilado ou quando executando em modo API-only.
+  ```bash
+  SKIP_FRONTEND_BUILD=1 npm start
+  ```
+
+- **`CI`** (valor: `true`)  
+  Quando definido, falhas no build do frontend causam falha na inicialização (exit code != 0). Usado em ambientes de integração contínua.
+  ```bash
+  CI=true npm start
+  ```
+
+- **`FORCED_FAIL_ON_BUILD_ERROR`** (valor: `1`)  
+  Força falha na inicialização quando o build do frontend falhar, mesmo fora do ambiente CI.
+  ```bash
+  FORCED_FAIL_ON_BUILD_ERROR=1 npm start
+  ```
+
+### Servidor Backend
+
+- **`FRONTEND_PATH`**  
+  Caminho customizado para os arquivos estáticos do frontend compilado. Por padrão: `../frontend/dist`
+  ```bash
+  FRONTEND_PATH=/custom/path/to/dist npm run start:dev
+  ```
+
+- **`PORT`**  
+  Porta do servidor. Por padrão: `3000`
+  ```bash
+  PORT=8080 npm run start:dev
+  ```
+
+- **`NODE_ENV`**  
+  Ambiente de execução do Node.js. Recomendado: `production` para produção.
+  ```bash
+  NODE_ENV=production npm start
+  ```
+
 ## 🐳 Executar com Docker
 
 ### Build da imagem
 
 ```bash
+# Build padrão (com frontend incluído)
 docker build -t portarias-backend .
+
+# Build sem frontend (API-only)
+docker build --build-arg SKIP_FRONTEND_BUILD=1 -t portarias-backend .
 ```
 
 ### Executar container

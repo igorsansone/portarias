@@ -39,6 +39,7 @@ Ou use `npm run start:dev` para pular a etapa de build do frontend.
 ## 🌐 Servidor
 
 O servidor serve:
+
 - API REST em `/api/*` (retorna JSON)
 - Arquivos estáticos do frontend em `/` (quando compilado)
 - Fallback SPA para rotas não-API (retorna `index.html`)
