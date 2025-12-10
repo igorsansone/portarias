@@ -259,8 +259,11 @@ const frontendPath =
 
 // Helper function to handle API 404 responses consistently
 function handleApiNotFound(req, res) {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Not found' });
+  // Use originalUrl to get the full path (req.path may be stripped by middleware)
+  const url = req.originalUrl || req.url;
+  if (url.startsWith('/api/')) {
+    res.status(404).json({ error: 'Not found' });
+    return true;
   }
   return false;
 }
@@ -275,21 +278,30 @@ if (fs.existsSync(indexPath)) {
   // Note: Rate limiting is not applied here as this serves static frontend files
   // which are essential for the UI and not computationally expensive.
   // API routes are protected by rate limiting (see line 21).
-  app.get('*', (req, res) => {
+  app.use('*', (req, res, next) => {
     // Ensure API routes that don't exist return JSON 404, not HTML
     if (handleApiNotFound(req, res)) {
       return;
     }
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        console.error('Error serving index.html:', err);
-        res.status(500).json({
-          error: 'Failed to serve frontend application',
-          message:
-            'The frontend build may be missing. Run "npm run build" in the frontend directory.',
-        });
-      }
-    });
+    // Only serve index.html for GET requests (SPA navigation)
+    if (req.method === 'GET') {
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.error('Error serving index.html:', err);
+          res.status(500).json({
+            error: 'Failed to serve frontend application',
+            message:
+              'The frontend build may be missing. Run "npm run build" in the frontend directory.',
+          });
+        }
+      });
+    } else {
+      // Non-GET requests to non-API routes
+      res.status(405).json({
+        error: 'Method not allowed',
+        message: `${req.method} requests are not supported for this route.`,
+      });
+    }
   });
 } else {
   console.warn(
@@ -297,8 +309,8 @@ if (fs.existsSync(indexPath)) {
   );
   console.warn('To build the frontend, run: cd frontend && npm run build');
 
-  // API-only mode: catch-all route for all requests
-  app.get('*', (req, res) => {
+  // API-only mode: catch-all route for all requests and HTTP methods
+  app.use('*', (req, res, next) => {
     if (handleApiNotFound(req, res)) {
       return;
     }
