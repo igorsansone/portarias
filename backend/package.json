@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "npm --prefix ../frontend install && npm --prefix ../frontend run build && node server.js",
+    "start:dev": "node server.js",
     "dev": "node server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
