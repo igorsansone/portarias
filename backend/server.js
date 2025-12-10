@@ -264,6 +264,9 @@ if (fs.existsSync(indexPath)) {
 
   // Catch-all route to serve index.html for single-page application routing
   // This must be after all API routes
+  // Note: Rate limiting is not applied here as this serves static frontend files
+  // which are essential for the UI and not computationally expensive.
+  // API routes are protected by rate limiting (see line 21).
   app.get('*', (req, res) => {
     res.sendFile(indexPath, (err) => {
       if (err) {
