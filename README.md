@@ -6,6 +6,20 @@
 
 Este projeto implementa um sistema para controle e gerenciamento de portarias do CRORS.
 
+## ⚡ Quick Start
+
+```bash
+# Clonar o repositório
+git clone https://github.com/igorsansone/portarias.git
+cd portarias
+
+# Instalar dependências e executar
+npm run install:all
+npm start
+```
+
+Acesse: **http://localhost:3000**
+
 ## 📋 Funcionalidades
 
 - ✅ Cadastro, edição e exclusão de portarias
@@ -46,30 +60,48 @@ portarias/
 - Node.js 18.x ou superior
 - npm ou yarn
 
-### Backend
+### Execução Completa (Produção)
 
+Para executar a aplicação completa (frontend + backend integrados):
+
+```bash
+# Instalar dependências de backend e frontend
+npm run install:all
+
+# Compilar frontend e iniciar servidor
+npm start
+```
+
+A aplicação estará disponível em `http://localhost:3000`
+
+- O backend serve tanto a API (`/api/*`) quanto o frontend compilado (`/`)
+- O banco SQLite será criado automaticamente em `backend/data/portarias.db`
+- Dados de exemplo (seed) são inseridos na primeira execução
+
+### Desenvolvimento (Frontend e Backend Separados)
+
+Para desenvolvimento com hot-reload, execute em **dois terminais separados**:
+
+**Terminal 1 - Backend:**
 ```bash
 cd backend
 npm install
 npm start
 ```
 
-O servidor estará disponível em `http://localhost:3000`
+O servidor API estará disponível em `http://localhost:3000`
 
-- O banco SQLite será criado automaticamente em `backend/data/portarias.db`
-- Dados de exemplo (seed) são inseridos na primeira execução
-
-### Frontend
-
+**Terminal 2 - Frontend:**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-A aplicação estará disponível em `http://localhost:5173`
+O servidor de desenvolvimento estará disponível em `http://localhost:5173`
 
 - O frontend está configurado para fazer proxy das requisições `/api` para `http://localhost:3000`
+- Mudanças no código são recarregadas automaticamente
 
 ## 🐳 Executar com Docker
 
