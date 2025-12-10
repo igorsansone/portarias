@@ -1,0 +1,31 @@
+{
+  "name": "portarias",
+  "version": "1.0.0",
+  "description": "Sistema de Controle de Portarias - CRORS",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "start:backend": "npm start --prefix backend",
+    "start": "npm run build:frontend && npm run start:backend",
+    "dev:backend": "npm start --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev": "echo 'Para desenvolvimento, execute em terminais separados:' && echo '  Terminal 1: npm run dev:backend' && echo '  Terminal 2: npm run dev:frontend'",
+    "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
+    "lint:fix": "npm run lint:fix --prefix backend && npm run lint:fix --prefix frontend",
+    "format": "npm run format --prefix backend && npm run format --prefix frontend",
+    "format:check": "npm run format:check --prefix backend && npm run format:check --prefix frontend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/igorsansone/portarias.git"
+  },
+  "keywords": [
+    "portarias",
+    "crors",
+    "sistema",
+    "controle"
+  ],
+  "author": "",
+  "license": "MIT"
+}

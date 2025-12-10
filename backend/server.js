@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const db = require('./db');
 const stringify = require('csv-stringify').stringify;
 
@@ -250,5 +251,18 @@ app.get('/api/export', (req, res) => {
   );
 });
 
+// Serve static files from the frontend build directory
+const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendPath));
+
+// Catch-all route to serve index.html for single-page application routing
+// This must be after all API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`API rodando em http://localhost:${port}`));
+app.listen(port, () => {
+  console.log(`API rodando em http://localhost:${port}`);
+  console.log(`Servindo arquivos estáticos de: ${frontendPath}`);
+});
