@@ -42,6 +42,18 @@ function detectPackageManager() {
   return 'npm';
 }
 
+// Get the appropriate install command for the package manager
+function getInstallCommand(pm) {
+  // Use 'ci' for npm if package-lock.json exists, otherwise 'install'
+  if (
+    pm === 'npm' &&
+    fs.existsSync(path.join(FRONTEND_DIR, 'package-lock.json'))
+  ) {
+    return 'ci';
+  }
+  return 'install';
+}
+
 // Run a command and return a promise
 function runCommand(cmd, args, cwd, label) {
   return new Promise((resolve, reject) => {
@@ -71,9 +83,9 @@ function runCommand(cmd, args, cwd, label) {
 
 // Check if frontend build exists
 function frontendBuildExists() {
-  return (
-    fs.existsSync(FRONTEND_DIST) && fs.readdirSync(FRONTEND_DIST).length > 0
-  );
+  // Check if dist directory exists and contains index.html
+  const indexHtml = path.join(FRONTEND_DIST, 'index.html');
+  return fs.existsSync(indexHtml);
 }
 
 // Build frontend if needed
@@ -105,12 +117,7 @@ async function ensureFrontendBuild() {
 
   try {
     // Install dependencies
-    const installCmd =
-      pm === 'npm' &&
-      fs.existsSync(path.join(FRONTEND_DIR, 'package-lock.json'))
-        ? 'ci'
-        : 'install';
-
+    const installCmd = getInstallCommand(pm);
     await runCommand(pm, [installCmd], FRONTEND_DIR, 'Frontend Install');
 
     // Build frontend
@@ -144,7 +151,7 @@ async function startBackend() {
     throw new Error(`Backend script not found at ${backendScript}`);
   }
 
-  // Spawn the backend process and replace current process
+  // Spawn the backend process as a child process
   const proc = spawn('node', [backendScript], {
     cwd: BACKEND_DIR,
     stdio: 'inherit',
