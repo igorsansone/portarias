@@ -7,7 +7,12 @@ log() { printf '%s\n' "$*"; }
 
 # Resolve paths
 SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
+# If script is in scripts/ subdirectory, go up one level; otherwise REPO_ROOT is SCRIPT_DIR
+if [ "$(basename "$SCRIPT_DIR")" = "scripts" ]; then
+  REPO_ROOT="$(cd "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
+else
+  REPO_ROOT="$SCRIPT_DIR"
+fi
 FRONTEND_DIR="$REPO_ROOT/frontend"
 DIST_DIR="$FRONTEND_DIR/dist"
 
@@ -69,6 +74,12 @@ if [ -d "$FRONTEND_DIR" ] && [ -f "$FRONTEND_DIR/package.json" ]; then
   fi
 else
   log "No frontend found at $FRONTEND_DIR. API-only mode."
+fi
+
+# Final check: warn if dist directory is still missing
+if [ ! -d "$DIST_DIR" ]; then
+  log "Warning: Frontend build not found at $DIST_DIR. API-only mode."
+  log "To build the frontend, run: cd frontend && npm run build"
 fi
 
 log "Starting backend process..."
