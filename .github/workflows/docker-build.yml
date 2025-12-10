@@ -1,0 +1,26 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: |
+          docker build -t portarias-backend:test .
+      
+      - name: Test Docker image
+        run: |
+          docker run -d --name test-container -p 3000:3000 portarias-backend:test
+          sleep 5
+          docker logs test-container
+          docker stop test-container
+          docker rm test-container

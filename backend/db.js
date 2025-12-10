@@ -36,8 +36,28 @@ if (row.cnt === 0) {
   const insert = db.prepare(`INSERT INTO portarias
   (ordem, objeto, requerente, passou_plenaria, numero_plenaria, tem_pdf, tem_word, assinada, publicada)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-  insert.run('001/2026', 'Nomeação de comissão X', 'Cadastro', 1, 'PL-01/2026', 1, 0, 1, 1);
-  insert.run('002/2026', 'Contrato de prestação de serviços Y', 'Compras', 0, null, 0, 1, 0, 0);
+  insert.run(
+    '001/2026',
+    'Nomeação de comissão X',
+    'Cadastro',
+    1,
+    'PL-01/2026',
+    1,
+    0,
+    1,
+    1
+  );
+  insert.run(
+    '002/2026',
+    'Contrato de prestação de serviços Y',
+    'Compras',
+    0,
+    null,
+    0,
+    1,
+    0,
+    0
+  );
 }
 
 module.exports = db;

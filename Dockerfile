@@ -1,23 +1,25 @@
 FROM node:18-alpine
 
-# Defina o diretório de trabalho
+# Install build dependencies for native modules (better-sqlite3)
+RUN apk add --no-cache python3 make g++
+
+# Set working directory
 WORKDIR /app
 
-# Copie package.json e, se houver, package-lock.json
-COPY package*.json ./
+# Copy backend package files
+COPY backend/package*.json ./
 
-# (opcional) listar para debug - remova depois
-RUN echo "Arquivos em /app:" && ls -la /app
+# Install dependencies
+RUN npm ci --omit=dev || npm install --omit=dev
 
-# Instale dependências (usa npm ci se houver package-lock.json)
-RUN if [ -f package-lock.json ]; then \
-      npm ci --omit=dev; \
-    else \
-      npm install --omit=dev; \
-    fi
+# Copy backend code
+COPY backend/ ./
 
-# Copie o restante do código
-COPY . .
+# Create data directory
+RUN mkdir -p data
 
-# Ajuste o comando de entrada conforme sua app
-CMD ["node", "index.js"]
+# Expose port
+EXPOSE 3000
+
+# Start the server
+CMD ["node", "server.js"]

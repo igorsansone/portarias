@@ -15,30 +15,54 @@ function toBooleanInt(v) {
 
 // Listagem com pesquisa e filtros
 app.get('/api/portarias', (req, res) => {
-  const { search, assinada, publicada, tem_pdf, tem_word, page = 1, limit = 20 } = req.query;
+  const {
+    search,
+    assinada,
+    publicada,
+    tem_pdf,
+    tem_word,
+    page = 1,
+    limit = 20,
+  } = req.query;
   const offset = (page - 1) * limit;
   let filters = [];
   let params = [];
 
   if (search) {
-    filters.push("(ordem LIKE ? OR objeto LIKE ? OR requerente LIKE ?)");
+    filters.push('(ordem LIKE ? OR objeto LIKE ? OR requerente LIKE ?)');
     const s = `%${search}%`;
-    params.push(s,s,s);
+    params.push(s, s, s);
   }
-  if (assinada !== undefined) { filters.push("assinada = ?"); params.push(assinada == 'true' ? 1 : 0); }
-  if (publicada !== undefined) { filters.push("publicada = ?"); params.push(publicada == 'true' ? 1 : 0); }
-  if (tem_pdf !== undefined) { filters.push("tem_pdf = ?"); params.push(tem_pdf == 'true' ? 1 : 0); }
-  if (tem_word !== undefined) { filters.push("tem_word = ?"); params.push(tem_word == 'true' ? 1 : 0); }
+  if (assinada !== undefined) {
+    filters.push('assinada = ?');
+    params.push(assinada == 'true' ? 1 : 0);
+  }
+  if (publicada !== undefined) {
+    filters.push('publicada = ?');
+    params.push(publicada == 'true' ? 1 : 0);
+  }
+  if (tem_pdf !== undefined) {
+    filters.push('tem_pdf = ?');
+    params.push(tem_pdf == 'true' ? 1 : 0);
+  }
+  if (tem_word !== undefined) {
+    filters.push('tem_word = ?');
+    params.push(tem_word == 'true' ? 1 : 0);
+  }
 
   const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
-  const stmt = db.prepare(`SELECT * FROM portarias ${where} ORDER BY ordem LIMIT ? OFFSET ?`);
+  const stmt = db.prepare(
+    `SELECT * FROM portarias ${where} ORDER BY ordem LIMIT ? OFFSET ?`
+  );
   const rows = stmt.all(...params, Number(limit), Number(offset));
   res.json(rows);
 });
 
 // Get por id
 app.get('/api/portarias/:id', (req, res) => {
-  const row = db.prepare('SELECT * FROM portarias WHERE id = ?').get(req.params.id);
+  const row = db
+    .prepare('SELECT * FROM portarias WHERE id = ?')
+    .get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
   res.json(row);
 });
@@ -49,9 +73,18 @@ app.post('/api/portarias', (req, res) => {
   if (!p.ordem) return res.status(400).json({ error: 'ordem é obrigatória' });
 
   // Valida campos condicionais
-  if (p.passou_plenaria && !p.numero_plenaria) return res.status(400).json({ error: 'numero_plenaria é obrigatório se passou_plenaria' });
-  if (p.passou_diretoria && !p.numero_diretoria) return res.status(400).json({ error: 'numero_diretoria é obrigatório se passou_diretoria' });
-  if (p.passou_despacho && !p.numero_despacho) return res.status(400).json({ error: 'numero_despacho é obrigatório se passou_despacho' });
+  if (p.passou_plenaria && !p.numero_plenaria)
+    return res
+      .status(400)
+      .json({ error: 'numero_plenaria é obrigatório se passou_plenaria' });
+  if (p.passou_diretoria && !p.numero_diretoria)
+    return res
+      .status(400)
+      .json({ error: 'numero_diretoria é obrigatório se passou_diretoria' });
+  if (p.passou_despacho && !p.numero_despacho)
+    return res
+      .status(400)
+      .json({ error: 'numero_despacho é obrigatório se passou_despacho' });
 
   // Inserção
   try {
@@ -73,10 +106,13 @@ app.post('/api/portarias', (req, res) => {
       toBooleanInt(p.assinada),
       toBooleanInt(p.publicada)
     );
-    const created = db.prepare('SELECT * FROM portarias WHERE id = ?').get(info.lastInsertRowid);
+    const created = db
+      .prepare('SELECT * FROM portarias WHERE id = ?')
+      .get(info.lastInsertRowid);
     res.status(201).json(created);
   } catch (err) {
-    if (err.message && err.message.includes('UNIQUE')) return res.status(400).json({ error: 'Ordem já existe' });
+    if (err.message && err.message.includes('UNIQUE'))
+      return res.status(400).json({ error: 'Ordem já existe' });
     res.status(500).json({ error: err.message });
   }
 });
@@ -86,12 +122,17 @@ app.put('/api/portarias/:id', (req, res) => {
   const p = req.body;
   const id = req.params.id;
   // Validations as above
-  if (p.passou_plenaria && !p.numero_plenaria) return res.status(400).json({ error: 'numero_plenaria é obrigatório se passou_plenaria' });
+  if (p.passou_plenaria && !p.numero_plenaria)
+    return res
+      .status(400)
+      .json({ error: 'numero_plenaria é obrigatório se passou_plenaria' });
 
   try {
-    db.prepare(`UPDATE portarias SET
+    db.prepare(
+      `UPDATE portarias SET
       ordem = ?, objeto = ?, requerente = ?, passou_plenaria = ?, numero_plenaria = ?, passou_diretoria = ?, numero_diretoria = ?, passou_despacho = ?, numero_despacho = ?, tem_pdf = ?, tem_word = ?, assinada = ?, publicada = ?, updated_at = datetime('now')
-      WHERE id = ?`).run(
+      WHERE id = ?`
+    ).run(
       p.ordem,
       p.objeto || '',
       p.requerente || '',
@@ -110,7 +151,8 @@ app.put('/api/portarias/:id', (req, res) => {
     const updated = db.prepare('SELECT * FROM portarias WHERE id = ?').get(id);
     res.json(updated);
   } catch (err) {
-    if (err.message && err.message.includes('UNIQUE')) return res.status(400).json({ error: 'Ordem já existe' });
+    if (err.message && err.message.includes('UNIQUE'))
+      return res.status(400).json({ error: 'Ordem já existe' });
     res.status(500).json({ error: err.message });
   }
 });
@@ -129,11 +171,19 @@ app.get('/api/report', (req, res) => {
   const { tipo } = req.query;
   let rows;
   if (tipo === 'assinatura') {
-    rows = db.prepare('SELECT * FROM portarias WHERE assinada = 0 ORDER BY ordem').all();
+    rows = db
+      .prepare('SELECT * FROM portarias WHERE assinada = 0 ORDER BY ordem')
+      .all();
   } else if (tipo === 'publicacao') {
-    rows = db.prepare('SELECT * FROM portarias WHERE publicada = 0 ORDER BY ordem').all();
+    rows = db
+      .prepare('SELECT * FROM portarias WHERE publicada = 0 ORDER BY ordem')
+      .all();
   } else if (tipo === 'documento') {
-    rows = db.prepare('SELECT * FROM portarias WHERE (tem_pdf = 0 AND tem_word = 0) ORDER BY ordem').all();
+    rows = db
+      .prepare(
+        'SELECT * FROM portarias WHERE (tem_pdf = 0 AND tem_word = 0) ORDER BY ordem'
+      )
+      .all();
   } else {
     rows = db.prepare('SELECT * FROM portarias ORDER BY ordem').all();
   }
@@ -145,23 +195,47 @@ app.get('/api/export', (req, res) => {
   const { tipo } = req.query;
   let rows;
   if (tipo === 'assinatura') {
-    rows = db.prepare('SELECT * FROM portarias WHERE assinada = 0 ORDER BY ordem').all();
+    rows = db
+      .prepare('SELECT * FROM portarias WHERE assinada = 0 ORDER BY ordem')
+      .all();
   } else if (tipo === 'publicacao') {
-    rows = db.prepare('SELECT * FROM portarias WHERE publicada = 0 ORDER BY ordem').all();
+    rows = db
+      .prepare('SELECT * FROM portarias WHERE publicada = 0 ORDER BY ordem')
+      .all();
   } else if (tipo === 'documento') {
-    rows = db.prepare('SELECT * FROM portarias WHERE (tem_pdf = 0 AND tem_word = 0) ORDER BY ordem').all();
+    rows = db
+      .prepare(
+        'SELECT * FROM portarias WHERE (tem_pdf = 0 AND tem_word = 0) ORDER BY ordem'
+      )
+      .all();
   } else {
     rows = db.prepare('SELECT * FROM portarias ORDER BY ordem').all();
   }
 
-  const columns = ['ordem','objeto','requerente','assinada','publicada','tem_pdf','tem_word','created_at'];
+  const columns = [
+    'ordem',
+    'objeto',
+    'requerente',
+    'assinada',
+    'publicada',
+    'tem_pdf',
+    'tem_word',
+    'created_at',
+  ];
   res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', `attachment; filename="portarias_${tipo||'all'}.csv"`);
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="portarias_${tipo || 'all'}.csv"`
+  );
 
-  stringify(rows.map(r => columns.map(c => r[c])), { header: true, columns }, (err, output) => {
-    if (err) return res.status(500).send(err.message);
-    res.send(output);
-  });
+  stringify(
+    rows.map((r) => columns.map((c) => r[c])),
+    { header: true, columns },
+    (err, output) => {
+      if (err) return res.status(500).send(err.message);
+      res.send(output);
+    }
+  );
 });
 
 const port = process.env.PORT || 3000;
