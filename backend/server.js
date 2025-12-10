@@ -268,6 +268,10 @@ if (fs.existsSync(indexPath)) {
   // which are essential for the UI and not computationally expensive.
   // API routes are protected by rate limiting (see line 21).
   app.get('*', (req, res) => {
+    // Ensure API routes that don't exist return JSON 404, not HTML
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'Not found' });
+    }
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('Error serving index.html:', err);
