@@ -14,7 +14,11 @@ COPY frontend/ ./
 
 # Build frontend (can be skipped with --build-arg SKIP_FRONTEND_BUILD=1)
 ARG SKIP_FRONTEND_BUILD=0
-RUN if [ "$SKIP_FRONTEND_BUILD" != "1" ]; then npm run build; fi
+RUN if [ "$SKIP_FRONTEND_BUILD" != "1" ]; then \
+      npm run build; \
+    else \
+      mkdir -p dist && echo "Frontend build skipped" > dist/.skip; \
+    fi
 
 # Stage 2 - Build backend image
 FROM node:18-alpine
