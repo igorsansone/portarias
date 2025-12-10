@@ -1,44 +1,84 @@
 #!/usr/bin/env sh
+# Robust start script: build frontend when possible, fall back to API-only.
+# Usage: ./scripts/start.sh <cmd-to-start-backend>...
 set -eu
 
-# Robust detection of npm / Node.js
-NPM_CMD=""
-if command -v npm >/dev/null 2>&1; then
-  NPM_CMD="$(command -v npm)"
-else
-  # Try enabling corepack (if present) which can expose package managers in some images
-  if command -v corepack >/dev/null 2>&1; then
-    corepack enable >/dev/null 2>&1 || true
-    if command -v npm >/dev/null 2>&1; then
-      NPM_CMD="$(command -v npm)"
+log() { printf '%s\n' "$*"; }
+
+# Resolve paths
+SCRIPT_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." >/dev/null 2>&1 && pwd)"
+FRONTEND_DIR="$REPO_ROOT/frontend"
+DIST_DIR="$FRONTEND_DIR/dist"
+
+# Env flags:
+# SKIP_FRONTEND_BUILD=1|true  => skip build
+# CI=true                     => fail start when build fails
+# FORCED_FAIL_ON_BUILD_ERROR=1 => fail start on build error even if not CI
+
+log "Start script: checking frontend build..."
+
+if [ -d "$FRONTEND_DIR" ] && [ -f "$FRONTEND_DIR/package.json" ]; then
+  if [ -d "$DIST_DIR" ]; then
+    log "Frontend build detected at $DIST_DIR"
+    FRONTEND_BUILT=1
+  else
+    FRONTEND_BUILT=0
+  fi
+
+  if [ "${SKIP_FRONTEND_BUILD:-}" = "1" ] || [ "${SKIP_FRONTEND_BUILD:-}" = "true" ]; then
+    log "SKIP_FRONTEND_BUILD set; skipping frontend build"
+  else
+    if [ "$FRONTEND_BUILT" -eq 0 ]; then
+      if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+        log "Building frontend: $FRONTEND_DIR"
+        cd "$FRONTEND_DIR" || {
+          log "Failed to cd to $FRONTEND_DIR"; exit 1
+        }
+
+        build_err=""
+        if [ -f package-lock.json ]; then
+          if ! npm ci --silent; then build_err=$?; fi
+        else
+          if ! npm install --silent; then build_err=$?; fi
+        fi
+
+        if [ -z "$build_err" ]; then
+          if ! npm run build --silent; then build_err=$?; fi
+        fi
+
+        if [ -z "$build_err" ]; then
+          log "Frontend build succeeded"
+        else
+          log "Frontend build failed with exit code ${build_err}"
+          if [ "${CI:-}" = "true" ] || [ "${FORCED_FAIL_ON_BUILD_ERROR:-}" = "1" ]; then
+            log "CI or FORCED_FAIL_ON_BUILD_ERROR detected — failing start"
+            exit "${build_err}"
+          else
+            log "Continuing in API-only mode (frontend not available)"
+          fi
+        fi
+
+        cd "$REPO_ROOT" || exit 1
+      else
+        log "Warning: node/npm not found in PATH. Skipping frontend build. API-only mode."
+      fi
+    else
+      log "Skipping build: frontend already built"
     fi
   fi
-fi
-
-if [ -z "$NPM_CMD" ]; then
-  # As a last resort, if Node is present and an index file exists, run node directly
-  if command -v node >/dev/null 2>&1 && [ -f index.js ]; then
-    echo "npm not found; running node index.js"
-    exec node index.js
-  fi
-
-  echo "ERROR: npm (or compatible package manager) not found in PATH."
-  echo "Solution: use a Node.js base image (e.g. node:18-alpine) or install Node/npm in the image."
-  exit 1
-fi
-
-echo "Using $NPM_CMD to start the app..."
-
-# If package.json exists prefer running the start script (if present)
-if [ -f package.json ]; then
-  # Use npm run start --if-present to avoid failing if start script not defined
-  exec "$NPM_CMD" run start --if-present
 else
-  # Fallback to node index.js if present
-  if [ -f index.js ]; then
-    exec node index.js
-  fi
+  log "No frontend found at $FRONTEND_DIR. API-only mode."
+fi
 
-  echo "No package.json or index.js found; nothing to run"
-  exit 1
+log "Starting backend process..."
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+else
+  if [ -x "./bin/portarias" ]; then
+    exec ./bin/portarias
+  else
+    log "No command provided to start the backend and no ./bin/portarias found. Exiting."
+    exit 1
+  fi
 fi
