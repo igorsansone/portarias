@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 const db = require('./db');
 const stringify = require('csv-stringify').stringify;
 
@@ -252,14 +253,35 @@ app.get('/api/export', (req, res) => {
 });
 
 // Serve static files from the frontend build directory
-const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
-app.use(express.static(frontendPath));
+// Use environment variable for flexibility in different deployments
+const frontendPath =
+  process.env.FRONTEND_PATH || path.join(__dirname, '..', 'frontend', 'dist');
 
-// Catch-all route to serve index.html for single-page application routing
-// This must be after all API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
-});
+// Check if frontend build exists
+const indexPath = path.join(frontendPath, 'index.html');
+if (fs.existsSync(indexPath)) {
+  app.use(express.static(frontendPath));
+
+  // Catch-all route to serve index.html for single-page application routing
+  // This must be after all API routes
+  app.get('*', (req, res) => {
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).json({
+          error: 'Failed to serve frontend application',
+          message:
+            'The frontend build may be missing. Run "npm run build" in the frontend directory.',
+        });
+      }
+    });
+  });
+} else {
+  console.warn(
+    `Warning: Frontend build not found at ${frontendPath}. API-only mode.`
+  );
+  console.warn('To build the frontend, run: cd frontend && npm run build');
+}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
