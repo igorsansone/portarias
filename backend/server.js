@@ -278,7 +278,7 @@ if (fs.existsSync(indexPath)) {
   // Note: Rate limiting is not applied here as this serves static frontend files
   // which are essential for the UI and not computationally expensive.
   // API routes are protected by rate limiting (see line 21).
-  app.use('*', (req, res, next) => {
+  app.use('*', (req, res) => {
     // Ensure API routes that don't exist return JSON 404, not HTML
     if (handleApiNotFound(req, res)) {
       return;
@@ -310,7 +310,7 @@ if (fs.existsSync(indexPath)) {
   console.warn('To build the frontend, run: cd frontend && npm run build');
 
   // API-only mode: catch-all route for all requests and HTTP methods
-  app.use('*', (req, res, next) => {
+  app.use('*', (req, res) => {
     if (handleApiNotFound(req, res)) {
       return;
     }
