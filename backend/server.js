@@ -288,6 +288,11 @@ if (fs.existsSync(indexPath)) {
     `Warning: Frontend build not found at ${frontendPath}. API-only mode.`
   );
   console.warn('To build the frontend, run: cd frontend && npm run build');
+
+  // In API-only mode, catch all non-existent API routes and return JSON 404
+  app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
 }
 
 const port = process.env.PORT || 3000;
