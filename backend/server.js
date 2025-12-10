@@ -257,6 +257,14 @@ app.get('/api/export', (req, res) => {
 const frontendPath =
   process.env.FRONTEND_PATH || path.join(__dirname, '..', 'frontend', 'dist');
 
+// Helper function to handle API 404 responses consistently
+function handleApiNotFound(req, res) {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  return false;
+}
+
 // Check if frontend build exists
 const indexPath = path.join(frontendPath, 'index.html');
 if (fs.existsSync(indexPath)) {
@@ -269,8 +277,8 @@ if (fs.existsSync(indexPath)) {
   // API routes are protected by rate limiting (see line 21).
   app.get('*', (req, res) => {
     // Ensure API routes that don't exist return JSON 404, not HTML
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'Not found' });
+    if (handleApiNotFound(req, res)) {
+      return;
     }
     res.sendFile(indexPath, (err) => {
       if (err) {
@@ -288,16 +296,17 @@ if (fs.existsSync(indexPath)) {
     `Warning: Frontend build not found at ${frontendPath}. API-only mode.`
   );
   console.warn('To build the frontend, run: cd frontend && npm run build');
-  
-  // API-only mode: return JSON 404 for unknown API routes
+
+  // API-only mode: catch-all route for all requests
   app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'Not found' });
+    if (handleApiNotFound(req, res)) {
+      return;
     }
     // Non-API routes in API-only mode
-    res.status(404).json({ 
+    res.status(404).json({
       error: 'Frontend not available',
-      message: 'The frontend build is not available. This server is running in API-only mode.'
+      message:
+        'The frontend build is not available. This server is running in API-only mode.',
     });
   });
 }
