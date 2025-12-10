@@ -34,8 +34,9 @@ RUN npm ci --omit=dev || npm install --omit=dev
 # Copy backend code
 COPY backend/ ./
 
-# Copy frontend build from previous stage (if it exists)
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist 2>/dev/null || true
+# Copy frontend build from previous stage
+# Note: This will copy the dist directory if it was built in stage 1
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Create data directory
 RUN mkdir -p data

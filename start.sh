@@ -41,18 +41,18 @@ if [ -d "$FRONTEND_DIR" ] && [ -f "$FRONTEND_DIR/package.json" ]; then
           log "Failed to cd to $FRONTEND_DIR"; exit 1
         }
 
-        build_err=""
+        build_err=0
         if [ -f package-lock.json ]; then
-          if ! npm ci --silent; then build_err=$?; fi
+          npm ci --silent || build_err=$?
         else
-          if ! npm install --silent; then build_err=$?; fi
+          npm install --silent || build_err=$?
         fi
 
-        if [ -z "$build_err" ]; then
-          if ! npm run build --silent; then build_err=$?; fi
+        if [ "$build_err" -eq 0 ]; then
+          npm run build --silent || build_err=$?
         fi
 
-        if [ -z "$build_err" ]; then
+        if [ "$build_err" -eq 0 ]; then
           log "Frontend build succeeded"
         else
           log "Frontend build failed with exit code ${build_err}"
