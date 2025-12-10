@@ -103,6 +103,54 @@ O servidor de desenvolvimento estará disponível em `http://localhost:5173`
 - O frontend está configurado para fazer proxy das requisições `/api` para `http://localhost:3000`
 - Mudanças no código são recarregadas automaticamente
 
+## 🚢 Deploy e Produção
+
+### Build Automático do Frontend
+
+A partir da versão 1.0.0, o projeto inclui um sistema de build automático do frontend:
+
+1. **Durante a instalação (`npm install`)**: O frontend é automaticamente compilado via script `postinstall`
+2. **Durante o start (`npm start`)**: Verifica se o build existe e reconstrói se necessário
+3. **Ambiente Docker**: Usa multistage build para compilar o frontend na imagem
+
+Isso garante que o frontend esteja sempre disponível em ambientes de produção (Railway, Docker, etc.).
+
+### Deploy em Railway
+
+Para deploy no Railway, use as seguintes configurações:
+
+**Build Command:**
+```bash
+npm install
+```
+
+**Start Command:**
+```bash
+npm start
+```
+
+O Railway executará automaticamente o script `postinstall` que compila o frontend.
+
+### Deploy com Docker
+
+O Dockerfile já está configurado para multistage build:
+
+```bash
+# Build da imagem (inclui frontend)
+docker build -t portarias-backend .
+
+# Executar container
+docker run -d -p 3000:3000 -v $(pwd)/backend/data:/app/data portarias-backend
+```
+
+### Deployment em outras plataformas
+
+Para outras plataformas (Heroku, Render, Fly.io, etc.):
+
+1. Configure o **build command**: `npm install`
+2. Configure o **start command**: `npm start`
+3. O processo de build do frontend ocorrerá automaticamente
+
 ## ⚙️ Variáveis de Ambiente
 
 O projeto suporta as seguintes variáveis de ambiente para controlar o comportamento do build e inicialização:
