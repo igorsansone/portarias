@@ -1,0 +1,31 @@
+# Example multi-stage Dockerfile: build the frontend in a Node image and copy dist to the final image.
+# Adapt the final image to your backend language (Go, Node, Python, etc).
+#
+# Stage 1: frontend build
+FROM node:20-alpine AS frontend-build
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --silent
+COPY frontend/ .
+RUN npm run build --silent
+
+# Stage 2: build backend (example for Go)
+FROM golang:1.21-alpine AS backend-build
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go env -w GOPROXY=https://proxy.golang.org
+RUN go mod download
+COPY . .
+# Build backend binary (adjust as necessary)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/bin/portarias ./cmd/portarias
+
+# Final image: copy backend binary and frontend dist
+FROM alpine:3.18
+RUN addgroup -S app && adduser -S -G app app
+WORKDIR /app
+COPY --from=backend-build /app/bin/portarias ./bin/portarias
+COPY --from=frontend-build /app/dist ./frontend/dist
+RUN chown -R app:app /app
+USER app
+EXPOSE 8080
+CMD ["./bin/portarias"]
