@@ -4,10 +4,11 @@
   "description": "Sistema de Controle de Portarias - CRORS",
   "private": true,
   "scripts": {
+    "postinstall": "npm install --prefix backend && npm install --prefix frontend && npm run build:frontend",
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
     "start:backend": "npm start --prefix backend",
-    "start": "npm run build:frontend && npm run start:backend",
+    "start": "node scripts/check-and-start.js",
     "dev:backend": "npm start --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev": "echo 'Para desenvolvimento, execute em terminais separados:' && echo '  Terminal 1: npm run dev:backend' && echo '  Terminal 2: npm run dev:frontend'",
